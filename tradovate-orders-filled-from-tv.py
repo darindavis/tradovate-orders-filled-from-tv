@@ -1,12 +1,13 @@
 r"""
 File: tradovate-orders-filled-from-tv.py
-Desc: Summarize the Tradovate trade history (orders filled) exported from TradingView. Specifically for futures day trades.
+Desc: Summarize one day's Tradovate trade history (orders filled) exported from TradingView. Futures day trades only (all positions open and close same day).
 Input: CSV export from TradingView (Downloads\tradovate-orders-filled.csv)
 Output: Shell.
 Usage: See usage()
 Author: Darin Davis, Copyright 2026
 History:
     4/30/26: Initial version
+    5/1/26: Fix pandas text wrapping.
 """
 
 """
@@ -30,7 +31,10 @@ downloads_folder = Path.home() / "Downloads" # full path to current user's Downl
 """
 
 def usage():
-    print("\nUsage:", sys.argv[0], "[YYYY-MM-DD]")
+    print("\nUsage:", sys.argv[0], "[YYYY-MM-DD] (default = today)")
+    print("\nExport steps: In TradingView > Trade > Tradovate")
+    print("\tOrders > Filled")
+    print("\tExport data > Orders > Export\n")
 
 
 def debug(msg=""):
@@ -126,6 +130,7 @@ def main():
 
     if daily_history.empty:
         print("No trades on this date")
+        usage()
         exit(1)
 
     # remove unneded columns

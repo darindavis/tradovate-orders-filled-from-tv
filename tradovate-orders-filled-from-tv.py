@@ -92,6 +92,12 @@ def price_chg_to_dollars(symbol, price_chg):
 """
 def main():
 
+    # Force pandas to show all columns and allow wrapping
+    pd.set_option('display.max_columns', None)      # show every column
+    pd.set_option('display.width', None)            # auto-detect terminal width (or set a large number like 2000)
+    pd.set_option('display.max_colwidth', None)     # don't truncate individual cell content
+    pd.set_option('display.expand_frame_repr', True)  # enable wrapping
+
     this_date = date.today().strftime('%Y-%m-%d') # default date of trades to analyze
 
     if len(sys.argv) > 1: # check if user provided date

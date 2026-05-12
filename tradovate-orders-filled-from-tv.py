@@ -8,6 +8,7 @@ Author: Darin Davis, Copyright 2026
 History:
     4/30/26: Initial version
     5/1/26: Fix pandas text wrapping.
+    5/12/26: Add report file.
 """
 
 """
@@ -193,6 +194,16 @@ def main():
     else:
         print("All positions are flat (net_qty = 0 for all symbols).")
 
+   # save results to CSV
+    out_file = downloads_folder / f"{this_date} tradovate-orders-filled-rpt.csv"
+ 
+    with open(out_file, "w", encoding='utf-8') as f:
+        f.write(f"Tradovate trades for {this_date}\n")
+        daily_history.to_csv(f, index=False, sep=',', lineterminator='\n')
+
+        f.write(f"\nPnL per symbol\n")
+        net_positions.to_csv(f, index=False, sep=',', lineterminator='\n')
+        f.write(f"\nTotal PnL:,{total_pnl}\n")
 
 if __name__ == "__main__":
     main()

@@ -8,7 +8,7 @@ Author: Darin Davis, Copyright 2026
 History:
     4/30/26: Initial version
     5/1/26: Fix pandas text wrapping.
-    5/12/26: Add report file.
+    5/12/26: Add report file. Sort history by increasing 'Update Time'.
 """
 
 """
@@ -129,8 +129,9 @@ def main():
 
     print(f"\nTrade history for {this_date}")
 
-    # Convert Time column to datetime
+    # Convert Time column to datetime and sort increasing
     history['Update Time'] = pd.to_datetime(history['Update Time'])
+    history = history.sort_values(by='Update Time', ascending=True)
 
     # filter out all dates except for this_date
     daily_history = history[history['Update Time'].dt.date == pd.to_datetime(this_date).date()].copy()

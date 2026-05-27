@@ -9,6 +9,7 @@ History:
     4/30/26: Initial version
     5/1/26: Fix pandas text wrapping.
     5/12/26: Add report file. Sort history by increasing 'Update Time'.
+    5/27/26: Add calc for total PnL less fees.
 """
 
 """
@@ -25,7 +26,7 @@ import re
 """
 
 downloads_folder = Path.home() / "Downloads" # full path to current user's Downloads folder
-
+fee_rate = 0.5 # all-in fee per contract (round trip)
 
 """
                     FUNCTIONS
@@ -186,7 +187,9 @@ def main():
 
     # compute total PnL for all symbols
     total_pnl = net_positions['PnL'].sum()
-    print(f"\nTotal PnL: {total_pnl:.2f}\n")
+    print(f"\nTotal PnL: {total_pnl:.2f}")
+    total_pnl_less_fees = total_pnl - (fee_rate * net_positions['total_buy_qty'].sum())
+    print(f"Total PnL less fees: {total_pnl_less_fees:.2f}\n")
 
     # check to ensure all contracts closed
     if (net_positions['net_qty'] != 0).any():
@@ -205,6 +208,7 @@ def main():
         f.write(f"\nPnL per symbol\n")
         net_positions.to_csv(f, index=False, sep=',', lineterminator='\n')
         f.write(f"\nTotal PnL:,{total_pnl}\n")
+        f.write(f"Total PnL less fees:,{total_pnl_less_fees}\n")
 
 if __name__ == "__main__":
     main()

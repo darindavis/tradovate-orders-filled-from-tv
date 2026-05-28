@@ -10,6 +10,7 @@ History:
     5/1/26: Fix pandas text wrapping.
     5/12/26: Add report file. Sort history by increasing 'Update Time'.
     5/27/26: Add calc for total PnL less fees.
+    5/28/26: Improve calculation of fees on per ticker basis.
 """
 
 """
@@ -26,7 +27,7 @@ import re
 """
 
 downloads_folder = Path.home() / "Downloads" # full path to current user's Downloads folder
-fee_rate = 0.5 # all-in fee per contract (round trip)
+
 
 """
                     FUNCTIONS
@@ -46,6 +47,43 @@ def debug(msg=""):
         line = sys._getframe(1).f_lineno # 1 = caller's line number
         # print(f"DEBUG [{__file__}:{line}] {msg}")
         print(f"DEBUG [{line}] {msg}")
+
+"""
+Returns the fee for the symbol supplied as an argument. The fees are as follows:
+    Apex fees:
+        MGC: $0.67
+        M2K: $0.52
+        MNQ: $0.52
+        MCL: $0.67
+"""
+def get_fee(symbol):
+    pattern = re.compile(r"^(.?)(..)[A-Z][0-9]$")
+
+    match = pattern.match(symbol) # eval ticker
+    if match: # extract the contract abbreviation from the symbol
+        type = match.group(1) # micro or mini; or 'R' in 'RTY'?
+        abbrev = match.group(2) # isolate the two-letter abbreviation or 'TY' in 'RTY'
+        debug(f"Processing {type}.{abbrev}")
+
+    match abbrev:
+        case "GC":
+            fee = 0.67
+        case "2K":
+            fee = 0.52
+        case "NQ":
+            fee = 0.52
+        case "CL":
+            fee = 0.67
+        case _: # unrecognized symbol
+            fee = 0
+            print(f"unrecognized abbreviation {abbrev}")
+
+    # debug(f"fee for a mini = {fee:.2f}")
+    # if type == 'M':
+    #     fee = fee / 10
+    #     debug(f"fee for a micro = {fee:.2f}")
+
+    return fee
 
 
 """
@@ -157,6 +195,8 @@ def main():
     daily_history['sell_price'] = daily_history['Avg Fill Price'].where(daily_history['Side'] == 'Sell', 0)
     daily_history['ext_buy_price'] = daily_history['buy_price'] * daily_history['buy_qty']
     daily_history['ext_sell_price'] = daily_history['sell_price'] * daily_history['sell_qty']
+    daily_history['fee'] = daily_history['Symbol'].apply(get_fee) * daily_history['Filled Qty']
+
     # print(daily_history.info())
     print("\nDaily history with extended prices for aggregation:")
     print(daily_history)
@@ -188,7 +228,11 @@ def main():
     # compute total PnL for all symbols
     total_pnl = net_positions['PnL'].sum()
     print(f"\nTotal PnL: {total_pnl:.2f}")
-    total_pnl_less_fees = total_pnl - (fee_rate * net_positions['total_buy_qty'].sum())
+
+    # compute total_fees as the sum of the fee column in daily_history
+    total_fees = daily_history['fee'].sum()
+    
+    total_pnl_less_fees = total_pnl - total_fees
     print(f"Total PnL less fees: {total_pnl_less_fees:.2f}\n")
 
     # check to ensure all contracts closed

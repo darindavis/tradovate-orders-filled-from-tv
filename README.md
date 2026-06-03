@@ -1,4 +1,4 @@
-# tradovate-orders-filled-from-tv
+# tradovate_orders_filled_from_tv
 Summarize one day's Tradovate trade history (orders filled) exported from TradingView.<br>
 Futures day trades only (all positions open and close same day).
 

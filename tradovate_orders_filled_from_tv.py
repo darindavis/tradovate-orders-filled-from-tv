@@ -11,6 +11,7 @@ History:
     5/12/26: Add report file. Sort history by increasing 'Update Time'.
     5/27/26: Add calc for total PnL less fees.
     5/28/26: Improve calculation of fees on per ticker basis.
+    6/3/26: Created pytest tests. Add calc_percent_return(). Add name of calling function to debug output.
 """
 
 """
@@ -44,19 +45,22 @@ def debug(msg=""):
     debug_flag = False
 
     if debug_flag:
-        line = sys._getframe(1).f_lineno # 1 = caller's line number
+        frame = sys._getframe(1) # 1 = caller's frame
+        line = frame.f_lineno # 1 = caller's line number
+        func_name = frame.f_code.co_name # function name of caller
         # print(f"DEBUG [{__file__}:{line}] {msg}")
-        print(f"DEBUG [{line}] {msg}")
+        print(f"DEBUG [{func_name}:{line}] {msg}")
 
-"""
-Returns the fee for the symbol supplied as an argument. The fees are as follows:
-    Apex fees:
-        MGC: $0.67
-        M2K: $0.52
-        MNQ: $0.52
-        MCL: $0.67
-"""
+
 def get_fee(symbol):
+    """
+    Returns the fee for the symbol supplied as an argument. The fees are as follows:
+        Apex fees:
+            MGC: $0.67
+            M2K: $0.52
+            MNQ: $0.52
+            MCL: $0.67
+    """
     pattern = re.compile(r"^(.?)(..)[A-Z][0-9]$")
 
     match = pattern.match(symbol) # eval ticker
@@ -64,6 +68,9 @@ def get_fee(symbol):
         type = match.group(1) # micro or mini; or 'R' in 'RTY'?
         abbrev = match.group(2) # isolate the two-letter abbreviation or 'TY' in 'RTY'
         debug(f"Processing {type}.{abbrev}")
+    else:
+        print(f"unrecognized symbol {symbol}")
+        return 0
 
     match abbrev:
         case "GC":
@@ -86,10 +93,10 @@ def get_fee(symbol):
     return fee
 
 
-"""
-                    Convert futures points to dollar equivalent
-"""
 def price_chg_to_dollars(symbol, price_chg):
+    """
+                        Convert futures points to dollar equivalent
+    """
 
     # Define regex pattern for a futures contract symbol (mini or micro)
     pattern = re.compile(r"^(.?)(..)[A-Z][0-9]$")
@@ -99,6 +106,9 @@ def price_chg_to_dollars(symbol, price_chg):
         type = match.group(1) # micro or mini; or 'R' in 'RTY'?
         abbrev = match.group(2) # isolate the two-letter abbreviation or 'TY' in 'RTY'
         debug(f"Processing {type}.{abbrev}, {price_chg:.2f}")
+    else:
+        print(f"unrecognized symbol {symbol}")
+        return 0
 
     # compute dollar value for a mini (price change / tick size * tick value)
     match abbrev:
@@ -127,10 +137,65 @@ def price_chg_to_dollars(symbol, price_chg):
     return dollar
 
 
-"""
-                    MAIN CODE
-"""
+def calc_percent_return(symbol, num_contracts, PnL):
+    """
+        Calculates the percentage return on margin for the trade.
+        Return value is a decimal (e.g. 0.02 = 2% return).
+        The margin rate varies by symbol and market conditions, so this calculation is just an estimate.
+        Tradovate distinguishes between "day margin" (much lower) and "initial (overnight) margin" (much higher).
+        The day margin is used for day trades only. Day margin rates:
+        https://www.tradovate.com/resources/markets/margin/?term=mnq
+    """
+
+    # protect against divide by zero
+    if num_contracts < 1:
+        print(f"Need at least 1 contract for {symbol}")
+        return 0
+
+    # Define regex pattern for a futures contract symbol (mini or micro)
+    pattern = re.compile(r"^(.?)(..)[A-Z][0-9]$")
+
+    match = pattern.match(symbol) # eval ticker
+    if match: # extract the contract abbreviation from the symbol
+        type = match.group(1) # micro or mini; or 'R' in 'RTY'?
+        abbrev = match.group(2) # isolate the two-letter abbreviation or 'TY' in 'RTY'
+        debug(f"Processing {type}.{abbrev}, {num_contracts} contracts, PnL ${PnL:.2f}")
+    else:
+        print(f"unrecognized symbol {symbol}")
+        return 0
+
+    # compute percent return for a mini (PnL / (num_contracts * margin))
+    match abbrev:
+        case "ES":
+            pcnt_return = PnL / ( num_contracts * 500 )
+        case "NQ":
+            pcnt_return = PnL / ( num_contracts * 1000 )
+        case "TY" | "2K":
+            pcnt_return = PnL / ( num_contracts * 500 )
+        case "YM":
+            pcnt_return = PnL / ( num_contracts * 500 )
+        case "CL":
+            pcnt_return = PnL / ( num_contracts * 1000 )
+        case "GC":
+            pcnt_return = PnL / ( num_contracts * 2000 )
+        case _: # unrecognized symbol
+            pcnt_return = 0
+            print(f"unrecognized abbreviation {abbrev}")
+
+    debug(f"percent return for a mini = {pcnt_return:.4f}")
+
+    # compute percent return for a micro
+    if type == 'M':
+        pcnt_return = pcnt_return / 10
+        debug(f"percent return for a micro = {pcnt_return:.4f}")
+
+    return pcnt_return
+
+
 def main():
+    """
+                        MAIN CODE
+    """
 
     # Force pandas to show all columns and allow wrapping
     pd.set_option('display.max_columns', None)      # show every column
@@ -221,6 +286,10 @@ def main():
     net_positions['PnL'] = net_positions.apply(lambda row: price_chg_to_dollars(row['Symbol'], row['net_price_chg']), axis=1)
     # apply() is an iterator function of a dataframe; axis=1 means "iterate through all rows" i.e. apply the lambda function to each row
     # "row" is an arbitrary (but conventional) variable name (not a keyword) that identifes a single row passed as the argument to the lambda
+
+    # compute percentage return on margin for each symbol
+    net_positions['PnL%'] = net_positions.apply(lambda row: calc_percent_return(row['Symbol'], row['total_buy_qty'], row['PnL']), axis=1)
+    net_positions['PnL%'] = net_positions['PnL%'] * 100 # convert decimal to percentage
 
     print("\nPnL per symbol:")
     print(net_positions)

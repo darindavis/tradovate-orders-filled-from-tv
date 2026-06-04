@@ -44,14 +44,14 @@ def test_get_fee(symbol, fee):
 
 @pytest.mark.parametrize("symbol, num_contracts, PnL, pcnt_return",
     [
-        ("MESQ6", 1, 100, 0.02), 
-        ("MNQQ6", 1, 100, 0.01), 
-        ("M2KQ6", 1, 100, 0.02), 
-        ("MYMQ6", 1, 100, 0.02),
-        ("MCLQ6", 1, 100, 0.01),
+        ("MESQ6", 1, 100, 2), 
+        ("MNQQ6", 1, 100, 1), 
+        ("M2KQ6", 1, 100, 2), 
+        ("MYMQ6", 1, 100, 2),
+        ("MCLQ6", 1, 100, 1),
         ("CLQ6", 1, 100, 0.1),
-        ("MGCQ6", 1, 100, 0.005),
-        ("MGCQ6", 10, 100, 0.005),
+        ("MGCQ6", 1, 100, 0.5),
+        ("MGCQ6", 10, 100, 0.05),
         ("MYM", 1, 1, 0), # unrecognized symbol
         ("MGCQ6", 0, 100, 0), # zero contracts = zero return
         ("MGCQ6", 1, 0, 0), # zero PnL = zero return

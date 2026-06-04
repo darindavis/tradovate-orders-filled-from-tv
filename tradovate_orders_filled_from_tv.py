@@ -12,6 +12,7 @@ History:
     5/27/26: Add calc for total PnL less fees.
     5/28/26: Improve calculation of fees on per ticker basis.
     6/3/26: Created pytest tests. Add calc_percent_return(). Add name of calling function to debug output.
+    6/4/26: Fix bug in calc_percent_return() and test_calc_percent_return().
 """
 
 """
@@ -186,7 +187,7 @@ def calc_percent_return(symbol, num_contracts, PnL):
 
     # compute percent return for a micro
     if type == 'M':
-        pcnt_return = pcnt_return / 10
+        pcnt_return = pcnt_return * 10
         debug(f"percent return for a micro = {pcnt_return:.4f}")
 
     return pcnt_return

@@ -13,6 +13,7 @@ History:
     5/28/26: Improve calculation of fees on per ticker basis.
     6/3/26: Created pytest tests. Add calc_percent_return(). Add name of calling function to debug output.
     6/4/26: Fix bug in calc_percent_return() and test_calc_percent_return().
+    7/7/26: Add ES and YM to get_fee().
 """
 
 """
@@ -56,11 +57,13 @@ def debug(msg=""):
 def get_fee(symbol):
     """
     Returns the fee for the symbol supplied as an argument. The fees are as follows:
-        Apex fees:
-            MGC: $0.67
-            M2K: $0.52
+        Apex fees (https://apextraderfunding.com/help-center/tradovate/tradovate-commission-instruments/):
+            MES: $0.52
             MNQ: $0.52
+            M2K: $0.52
+            MYM: $0.52
             MCL: $0.67
+            MGC: $0.67
     """
     pattern = re.compile(r"^(.?)(..)[A-Z][0-9]$")
 
@@ -74,13 +77,17 @@ def get_fee(symbol):
         return 0
 
     match abbrev:
-        case "GC":
-            fee = 0.67
-        case "2K":
+        case "ES":
             fee = 0.52
         case "NQ":
             fee = 0.52
+        case "2K":
+            fee = 0.52
+        case "YM":
+            fee = 0.52
         case "CL":
+            fee = 0.67
+        case "GC":
             fee = 0.67
         case _: # unrecognized symbol
             fee = 0

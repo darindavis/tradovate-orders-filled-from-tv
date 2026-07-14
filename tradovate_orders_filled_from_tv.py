@@ -14,6 +14,7 @@ History:
     6/3/26: Created pytest tests. Add calc_percent_return(). Add name of calling function to debug output.
     6/4/26: Fix bug in calc_percent_return() and test_calc_percent_return().
     7/7/26: Add ES and YM to get_fee().
+    7/14/26: Add rounding to 2 decimal places for PnL% column.
 """
 
 """
@@ -298,6 +299,7 @@ def main():
     # compute percentage return on margin for each symbol
     net_positions['PnL%'] = net_positions.apply(lambda row: calc_percent_return(row['Symbol'], row['total_buy_qty'], row['PnL']), axis=1)
     net_positions['PnL%'] = net_positions['PnL%'] * 100 # convert decimal to percentage
+    net_positions['PnL%'] = net_positions['PnL%'].round(2) # round to 2 decimal places
 
     print("\nPnL per symbol:")
     print(net_positions)

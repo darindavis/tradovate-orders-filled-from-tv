@@ -15,6 +15,7 @@ History:
     6/4/26: Fix bug in calc_percent_return() and test_calc_percent_return().
     7/7/26: Add ES and YM to get_fee().
     7/14/26: Add rounding to 2 decimal places for PnL% column.
+    7/15/26: Add tip to usage() for editing symbols in the exported CSV when there are multiple trades for the same symbol.
 """
 
 """
@@ -38,10 +39,18 @@ downloads_folder = Path.home() / "Downloads" # full path to current user's Downl
 """
 
 def usage():
-    print("\nUsage:", sys.argv[0], "[YYYY-MM-DD] (default = today)")
-    print("\nExport steps: In TradingView > Trade > Tradovate")
-    print("\tOrders > Filled")
-    print("\tExport data > Orders > Export\n")
+    script_name = Path(sys.argv[0]).name
+    print("\nUsage:", script_name, "[YYYY-MM-DD] (default = today)")
+    tips = r"""
+Export steps: In TradingView > Trade > Tradovate
+    Orders > Filled
+    Export data > Orders > Export
+
+Tip: If there are multiple trades for the same symbol, edit the exported CSV and replace the trailing
+integer in the symbol with a unique integer for each trade. For example, if there are two trades
+for MESM6, change the symbol for the first trade to MESM1 and the second trade to MESM2.
+"""
+    print(tips)
 
 
 def debug(msg=""):

@@ -17,6 +17,9 @@ History:
     7/14/26: Add rounding to 2 decimal places for PnL% column.
     7/15/26: Add tip to usage() for editing symbols in the exported CSV when there are multiple trades for the same symbol.
     7/23/26: Add rounding to 2 decimal places for net_price_chg column.
+    7/24/26: Add strip() to remove leading/trailing whitespace from 'Side' column in daily_history.
+             In rare cases, TradingView doesn't export all the rows that are in the Tradovate export. The Tradovate export has a leading
+             space in the 'Side' column. When those rows are copied into the TradingView export, the leading space must be removed.
 """
 
 """
@@ -270,6 +273,7 @@ def main():
     ### create columns for aggregation ###
 
     # create column reflecting negative quantity for sells
+    daily_history['Side'] = daily_history['Side'].str.strip() # remove leading/trailing whitespace
     daily_history['net_qty'] = daily_history['Filled Qty'].where(daily_history['Side'] == 'Buy', -daily_history['Filled Qty'])
 
     # Syntax: keep original value if condition is True; replace it with other value if condition is False

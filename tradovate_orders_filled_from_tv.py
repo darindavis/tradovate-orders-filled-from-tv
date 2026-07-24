@@ -16,6 +16,7 @@ History:
     7/7/26: Add ES and YM to get_fee().
     7/14/26: Add rounding to 2 decimal places for PnL% column.
     7/15/26: Add tip to usage() for editing symbols in the exported CSV when there are multiple trades for the same symbol.
+    7/23/26: Add rounding to 2 decimal places for net_price_chg column.
 """
 
 """
@@ -297,6 +298,7 @@ def main():
                     .reset_index())
 
     net_positions['net_price_chg'] = net_positions['total_sell_price'] - net_positions['total_buy_price']
+    net_positions['net_price_chg'] = net_positions['net_price_chg'].round(2) # round to 2 decimal places
     # print("\nAggregate columns:")
     # print(net_positions)
 

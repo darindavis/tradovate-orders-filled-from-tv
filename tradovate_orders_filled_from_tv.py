@@ -20,6 +20,7 @@ History:
     7/24/26: Add strip() to remove leading/trailing whitespace from 'Side' column in daily_history.
              In rare cases, TradingView doesn't export all the rows that are in the Tradovate export. The Tradovate export has a leading
              space in the 'Side' column. When those rows are copied into the TradingView export, the leading space must be removed.
+    7/24/26: Add fee to each trade line item.
 """
 
 """
@@ -298,6 +299,7 @@ def main():
                         total_sell_qty=('sell_qty', 'sum'),
                         total_buy_price=('ext_buy_price', 'sum'),
                         total_sell_price=('ext_sell_price', 'sum'),
+                        total_fee=('fee', 'sum'),
                     )
                     .reset_index())
 
@@ -310,24 +312,25 @@ def main():
     net_positions['PnL'] = net_positions.apply(lambda row: price_chg_to_dollars(row['Symbol'], row['net_price_chg']), axis=1)
     # apply() is an iterator function of a dataframe; axis=1 means "iterate through all rows" i.e. apply the lambda function to each row
     # "row" is an arbitrary (but conventional) variable name (not a keyword) that identifes a single row passed as the argument to the lambda
+    net_positions['PnL'] = net_positions['PnL'] - net_positions['total_fee'] # subtract fees from PnL
 
     # compute percentage return on margin for each symbol
     net_positions['PnL%'] = net_positions.apply(lambda row: calc_percent_return(row['Symbol'], row['total_buy_qty'], row['PnL']), axis=1)
     net_positions['PnL%'] = net_positions['PnL%'] * 100 # convert decimal to percentage
-    net_positions['PnL%'] = net_positions['PnL%'].round(2) # round to 2 decimal places
+    net_positions['PnL%'] = net_positions['PnL%'].round(1) # round to 2 decimal places
 
     print("\nPnL per symbol:")
     print(net_positions)
 
     # compute total PnL for all symbols
     total_pnl = net_positions['PnL'].sum()
-    print(f"\nTotal PnL: {total_pnl:.2f}")
+    print(f"\nTotal PnL (including fees): {total_pnl:.2f}")
 
     # compute total_fees as the sum of the fee column in daily_history
     total_fees = daily_history['fee'].sum()
     
-    total_pnl_less_fees = total_pnl - total_fees
-    print(f"Total PnL less fees: {total_pnl_less_fees:.2f}\n")
+    total_pnl_excluding_fees = total_pnl + total_fees
+    print(f"Total PnL (excluding fees): {total_pnl_excluding_fees:.2f}\n")
 
     # check to ensure all contracts closed
     if (net_positions['net_qty'] != 0).any():

@@ -21,6 +21,8 @@ History:
              In rare cases, TradingView doesn't export all the rows that are in the Tradovate export. The Tradovate export has a leading
              space in the 'Side' column. When those rows are copied into the TradingView export, the leading space must be removed.
     7/24/26: Add fee to each trade line item.
+    8/13/26: Add debug statements when loading history file.
+    8/21/26: Sort daily_history by increasing 'Update Time'.
 """
 
 """
@@ -244,9 +246,9 @@ def main():
     # load the history file into a dataframe
     try:
         if in_file.exists():
-            # print(f"File '{in_file}' exists!")
+            debug(f"File '{in_file}' exists!")
             if in_file.is_file():
-                # print("It's a regular file.")
+                debug("It's a regular file.")
                 history = pd.read_csv(in_file)
         else:
             print(f"File '{in_file}' does not exist.")
@@ -260,6 +262,10 @@ def main():
     history['Update Time'] = pd.to_datetime(history['Update Time'])
     history = history.sort_values(by='Update Time', ascending=True)
 
+    # history.info() # print summary of dataframe
+    # print(len(history), "rows in history")
+    # print(history.head()) # print first 5 rows of dataframe
+
     # filter out all dates except for this_date
     daily_history = history[history['Update Time'].dt.date == pd.to_datetime(this_date).date()].copy()
 
@@ -268,10 +274,11 @@ def main():
         usage()
         exit(1)
 
-    # remove unneded columns
+    # remove unneded columns; don't want them to appear in the report
     daily_history.drop(['Qty', 'Remaining Qty', 'Limit Price', 'Stop Loss', 'Stop Price', 'Take Profit', 'Expiry', 'Expiry Time', 'Order ID'], axis=1, inplace=True)
+    daily_history.sort_values(['Update Time'], inplace=True) # sort trades by increasing time (oldest first)
 
-    ### create columns for aggregation ###
+        ### create columns for aggregation ###
 
     # create column reflecting negative quantity for sells
     daily_history['Side'] = daily_history['Side'].str.strip() # remove leading/trailing whitespace

@@ -8,6 +8,7 @@ Usage: See usage()
 Author: Darin Davis, Copyright 2026
 History:
     8/13/26: Initial version
+    8/21/26: Sort tradovate by increasing 'Update Time'.
 """
 
 """
@@ -90,6 +91,7 @@ def main():
 
     tradovate = tradovate[['Symbol', 'Side', 'Type', 'Qty', 'Remaining Qty', 'Filled Qty', 'Limit Price', 'Stop Price', 'Take Profit',
                            'Stop Loss', 'Avg Fill Price', 'Update Time', 'Order ID', 'Expiry', 'Expiry Time']]
+    tradovate.sort_values(['Update Time'], inplace=True) # sort trades by increasing time (oldest first)
 
    # save results to CSV
     out_file = tradovate_folder / "tradovate-orders-filled.csv"

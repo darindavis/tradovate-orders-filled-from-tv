@@ -23,6 +23,7 @@ History:
     7/24/26: Add fee to each trade line item.
     8/13/26: Add debug statements when loading history file.
     8/21/26: Sort daily_history by increasing 'Update Time'.
+    8/24/26: Fix bug in writing to CSV the PnL excluding fees.
 """
 
 """
@@ -355,8 +356,8 @@ def main():
 
         f.write(f"\nPnL per symbol\n")
         net_positions.to_csv(f, index=False, sep=',', lineterminator='\n')
-        f.write(f"\nTotal PnL:,{total_pnl}\n")
-        f.write(f"Total PnL less fees:,{total_pnl_less_fees}\n")
+        f.write(f"\nTotal PnL (including fees):,{total_pnl}\n")
+        f.write(f"Total PnL (excluding fees):,{total_pnl_excluding_fees}\n")
 
 if __name__ == "__main__":
     main()

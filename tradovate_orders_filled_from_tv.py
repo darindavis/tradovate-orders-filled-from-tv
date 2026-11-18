@@ -24,6 +24,7 @@ History:
     8/13/26: Add debug statements when loading history file.
     8/21/26: Sort daily_history by increasing 'Update Time'.
     8/24/26: Fix bug in writing to CSV the PnL excluding fees.
+    11/17/26: pandas 3.1+ (Oct 2026) deprecates inplace=True in drop() and sort_values(). Use assignment instead.
 """
 
 """
@@ -40,6 +41,7 @@ import re
 """
 
 downloads_folder = Path.home() / "Downloads" # full path to current user's Downloads folder
+debug_flag = False
 
 
 """
@@ -62,8 +64,6 @@ for MESM6, change the symbol for the first trade to MESM1 and the second trade t
 
 
 def debug(msg=""):
-    debug_flag = False
-
     if debug_flag:
         frame = sys._getframe(1) # 1 = caller's frame
         line = frame.f_lineno # 1 = caller's line number
@@ -263,23 +263,44 @@ def main():
     history['Update Time'] = pd.to_datetime(history['Update Time'])
     history = history.sort_values(by='Update Time', ascending=True)
 
-    # history.info() # print summary of dataframe
-    # print(len(history), "rows in history")
-    # print(history.head()) # print first 5 rows of dataframe
+    if debug_flag:
+        history.info() # print summary of dataframe
+        print(len(history), "\nrows in history")
+        print(history)
 
     # filter out all dates except for this_date
     daily_history = history[history['Update Time'].dt.date == pd.to_datetime(this_date).date()].copy()
+    if debug_flag:
+        print(f"\ndaily_history after filtering for {this_date}:")
+        print(daily_history)
 
     if daily_history.empty:
-        print("No trades on this date")
+        print(f"No trades on {this_date}")
         usage()
         exit(1)
 
     # remove unneded columns; don't want them to appear in the report
-    daily_history.drop(['Qty', 'Remaining Qty', 'Limit Price', 'Stop Loss', 'Stop Price', 'Take Profit', 'Expiry', 'Expiry Time', 'Order ID'], axis=1, inplace=True)
-    daily_history.sort_values(['Update Time'], inplace=True) # sort trades by increasing time (oldest first)
+    debug("\nDropping unneeded columns from daily_history")
 
-        ### create columns for aggregation ###
+    # if debug_flag:
+    #     print("Columns present:", daily_history.columns.tolist())
+    # try:
+    #     daily_history.drop(
+    #         ['Qty', 'Remaining Qty', 'Stop Price'],
+    #         axis=1, inplace=True
+    #     )
+    # except Exception as e:
+    #     print(f"Exception in drop: {type(e).__name__}: {e}")
+    #     raise   # re-raise so you still get the full traceback
+
+    daily_history = daily_history.drop(['Qty', 'Remaining Qty', 'Stop Price'], axis=1)
+    debug("\nSorting daily_history by increasing 'Update Time'")
+    daily_history = daily_history.sort_values(['Update Time']) # sort trades by increasing time (oldest first)
+    if debug_flag:
+        print("\ndaily_history after drop and sort_values:")
+        print(daily_history)
+
+    ### create columns for aggregation ###
 
     # create column reflecting negative quantity for sells
     daily_history['Side'] = daily_history['Side'].str.strip() # remove leading/trailing whitespace
